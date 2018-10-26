@@ -179,8 +179,8 @@ pred2_loc <- t(mapply(loc_prob, dataset2$e, dataset2$n, MoreArgs = list(n = 20, 
 pred3_loc <- t(mapply(loc_prob, dataset3$e, dataset3$n, MoreArgs = list(n = 10, positions = dataset1)))
 pred2_desc <- roccio_alg(dataset2$description, doc.list = dataset1$description, cate = dataset1$service_name)
 pred3_desc <- roccio_alg(dataset3$description, doc.list = dataset1$description, cate = dataset1$service_name)
-pred2_py <- predict(dataset2$description, python_models)
-pred3_py <- predict(dataset3$description, python_models)
+pred2_py <- py_predict(dataset2$description, python_models)
+pred3_py <- py_predict(dataset3$description, python_models)
 
 pred2 <- as_tibble(cbind(as_tibble(pred2_loc), as_tibble(pred2_desc))) %>% 
   add_column(interface = as.factor(dataset2$interface), py_cat = as.factor(pred2_py))
@@ -188,7 +188,7 @@ pred2 <- as_tibble(cbind(as_tibble(pred2_loc), as_tibble(pred2_desc))) %>%
 pred3 <- as_tibble(cbind(as_tibble(pred3_loc), as_tibble(pred3_desc))) %>% 
   add_column(interface = as.factor(dataset3$interface), py_cat = as.factor(pred3_py))
 
-# train layer 2 model
+# train final model
 control <- trainControl(method="cv"
                         , number=2
                         , allowParallel = FALSE
@@ -226,23 +226,3 @@ sum(in_top_n)/length(in_top_n) # 90% accuracy that correct answer is in the top 
 table(final_pred, dataset3$service_name) # confusion matrix
 sum(diag(as.matrix(table(final_pred, dataset3$service_name))))/sum(as.matrix(table(final_pred, dataset3$service_name))) # accuracy
 
-
-###################################################################################################
-# prediction function (for final presentation)
-###################################################################################################
-
-presentation_models <- train_model(data_total$detail, data_total$service_name)
-
-predict_category <- function(text){
-  pred <- predict(c(text, text), presentation_models)[1,]
-  cat <- which.max(pred)
-  return(paste(case_when(cat == 1 ~ 'Abfall/Sammelstelle',
-                   cat == 2 ~  'Strasse/Trottoir/Platz',
-                   cat == 3 ~  'Signalisation/Lichtsignal',
-                   cat == 4 ~  'Grünflächen/Spielplätze',
-                   cat == 5 ~  'Beleuchtung/Uhren',
-                   cat == 6 ~  'Graffiti',
-                   cat == 7 ~  'VBZ/ÖV',
-                   cat == 8 ~  'Brunnen/Hydranten',
-                   TRUE ~ 'No comment on this one...'),sprintf('%1.1f%%',100*max(pred))))
-}

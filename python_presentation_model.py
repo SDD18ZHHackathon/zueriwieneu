@@ -15,8 +15,8 @@ def train_model(documents, classes):
 
     documents_vec = vectorizer.fit_transform(documents)
 
-    clf = RidgeClassifier(tol=1e-2, solver="sag")
-    #clf = RandomForestClassifier(n_estimators=100)
+    #clf = RidgeClassifier(tol=1e-2, solver="sag")
+    clf = RandomForestClassifier(n_estimators=100)
     clf.fit(documents_vec, classes)
 
     return((vectorizer, clf))
@@ -25,6 +25,6 @@ def train_model(documents, classes):
 def py_predict(text, models):
     vectorizer, clf = models
     text_vec = vectorizer.transform(text)
-    pred = clf.predict(text_vec)
+    pred = clf.predict_proba(text_vec) # use just 'prediction' for the RidgeClassifier
     return pred
 
